@@ -127,7 +127,7 @@ class ModelArguments:
     )
     vis_hidden: int  = field(default=896)
     lm_hidden: int   = field(default=896)
-    num_experts: int = field(default=8)
+    num_experts: int = field(default=4)
     top_k: int       = field(default=2)
     num_shared: int  = field(default=1)
     moe_dropout: float = field(default=0.0)

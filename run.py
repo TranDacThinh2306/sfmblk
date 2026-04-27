@@ -142,7 +142,7 @@ def write_train_script(
     meta_path,
     output_dir,
     num_gpus=1,
-    num_epochs=3,
+    num_epochs=5,
     per_device_batch_size=4,
     learning_rate=2e-4,
 ):
@@ -174,7 +174,7 @@ torchrun --nproc_per_node=$NUM_GPUS --master_port=12345 \\
     --force_image_size 448 \\
     --num_train_epochs {num_epochs} \\
     --per_device_train_batch_size {per_device_batch_size} \\
-    --gradient_accumulation_steps 4 \\
+    --gradient_accumulation_steps 2 \\
     --learning_rate {learning_rate} \\
     --weight_decay 0.01 \\
     --warmup_ratio 0.03 \\
