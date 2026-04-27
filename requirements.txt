@@ -1,0 +1,153 @@
+# =============================================================================
+# REQUIREMENTS.TXT - robustLLM Package Dependencies (FIXED)
+# =============================================================================
+# Changelog từ version cũ:
+#   - transformers: 4.45.2 → 4.46.3  (fix lỗi all_tied_weights_keys)
+#   - tokenizers:   0.20.3 → 0.20.3  (giữ nguyên, match với transformers 4.46.x)
+#   - accelerate:   0.33.0 → 0.34.2  (tương thích torch 2.10 + transformers 4.46)
+#   - peft:         0.12.0 → 0.13.2  (tương thích transformers 4.46)
+#   - bitsandbytes: 0.41.0 → 0.43.3  (support CUDA 12.8)
+#   - numpy:        1.26.4 → >=2.0    (tránh conflict với kaggle packages)
+#   - huggingface_hub: 0.36.2 → >=0.25.0 (không pin cứng, tránh downgrade)
+#   - sentencepiece: 0.1.99 → >=0.1.99 (không pin cứng, tránh downgrade)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 🔥 CORE DEPENDENCIES (BẮT BUỘC)
+# -----------------------------------------------------------------------------
+
+# PyTorch - Deep learning framework
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Transformers - QUAN TRỌNG: 4.46.3 fix lỗi all_tied_weights_keys
+# 4.45.2 gây lỗi vì thiếu property này trong PreTrainedModel
+# 4.46.0 bị yanked (lỗi Python 3.8), dùng 4.46.3 là stable
+transformers==4.47.0
+
+# Safetensors
+safetensors>=0.4.0
+
+# Einops
+einops==0.6.1
+
+# Timm
+timm==0.9.12
+
+# Pillow
+Pillow>=9.0.0
+
+# Tokenizers - phải match transformers 4.46.x
+tokenizers==0.20.3
+
+# Sentence Transformers
+sentence-transformers==2.7.0
+
+# Packaging
+packaging>=20.0
+
+
+# -----------------------------------------------------------------------------
+# 🚀 TRAINING & FINETUNING
+# -----------------------------------------------------------------------------
+
+# PEFT - 0.13.2 là version tương thích với transformers 4.46.x
+# 0.12.0 quá cũ, không tương thích tốt với transformers 4.46
+peft==0.13.2
+
+# Accelerate - 0.34.2 tương thích với torch 2.10 và transformers 4.46
+# 0.33.0 quá cũ so với torch 2.10
+accelerate==0.34.2
+
+# Bitsandbytes - 0.43.3 support CUDA 12.x
+# 0.41.0 không support CUDA 12.8 (Kaggle đang dùng CUDA 12.8)
+bitsandbytes==0.43.3
+
+# SentencePiece - không pin cứng, tránh downgrade từ 0.2.1
+sentencepiece>=0.1.99
+
+
+# -----------------------------------------------------------------------------
+# ⚡ PERFORMANCE OPTIMIZATION
+# -----------------------------------------------------------------------------
+
+# Flash Attention - comment nếu gặp lỗi khi cài
+# flash-attn>=2.0.0
+
+
+# -----------------------------------------------------------------------------
+# 📊 UTILITIES & HELPERS
+# -----------------------------------------------------------------------------
+
+# NumPy - KHÔNG pin xuống 1.26.4, kaggle cần >=2.0
+# 1.26.4 gây conflict với: jax, cupy, opencv-headless, rasterio, shap, ...
+numpy>=2.0
+
+requests>=2.28.0
+tqdm>=4.65.0
+pyyaml>=6.0
+scikit-learn>=1.2.2
+scipy>=1.10.0
+tensorboardX>=2.6
+termcolor>=2.0.0
+
+
+# -----------------------------------------------------------------------------
+# 🎨 IMAGE/VIDEO PROCESSING
+# -----------------------------------------------------------------------------
+
+opencv-python>=4.7.0
+decord
+imageio>=2.25.0
+
+
+# -----------------------------------------------------------------------------
+# 🔧 DEVELOPMENT & TESTING
+# -----------------------------------------------------------------------------
+
+einops-exts==0.0.4
+yacs>=0.1.8
+orjson>=3.8.0
+shortuuid>=1.0.0
+
+# HuggingFace Hub - không pin cứng, tránh downgrade từ 1.4.1
+huggingface_hub>=0.25.0
+
+# -----------------------------------------------------------------------------
+# 🎨 Kagglehub
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Monitoring & Logging
+# -----------------------------------------------------------------------------
+wandb
+# =============================================================================
+# TÓM TẮT CÁC THAY ĐỔI QUAN TRỌNG
+# =============================================================================
+# 1. transformers 4.45.2 → 4.46.3
+#    LÝ DO: 4.45.2 thiếu property `all_tied_weights_keys` trong PreTrainedModel
+#    khiến model crash khi load. Property này được thêm trong 4.46.x.
+#
+# 2. numpy 1.26.4 → >=2.0
+#    LÝ DO: Kaggle pre-install numpy 2.0.2. Pin xuống 1.26.4 gây conflict với
+#    10+ packages (jax, cupy, opencv-headless, rasterio, shap, ...).
+#
+# 3. accelerate 0.33.0 → 0.34.2
+#    LÝ DO: 0.33.0 không tương thích tốt với torch 2.10.
+#    0.34.x là minimum cho torch 2.x training ổn định.
+#
+# 4. peft 0.12.0 → 0.13.2
+#    LÝ DO: 0.12.0 không tương thích với transformers 4.46.
+#    0.13.x là version đồng bộ với transformers 4.46.x.
+#
+# 5. bitsandbytes 0.41.0 → 0.43.3
+#    LÝ DO: Kaggle dùng CUDA 12.8. bitsandbytes 0.41.0 chỉ support đến CUDA 12.1.
+#    0.43.x support CUDA 12.x đầy đủ.
+#
+# 6. huggingface_hub: bỏ pin cứng 0.36.2
+#    LÝ DO: Kaggle pre-install 1.4.1. Downgrade xuống 0.36.2 là không cần thiết
+#    và gây mất tính năng mới.
+#
+# 7. sentencepiece: bỏ pin cứng 0.1.99
+#    LÝ DO: Kaggle pre-install 0.2.1. Downgrade không cần thiết.
+# =============================================================================
