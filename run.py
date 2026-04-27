@@ -150,7 +150,7 @@ def write_train_script(
 set -e
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-
+export PYTHONPATH="/root/sfmblk:$PYTHONPATH"
 
 echo "PYTHONPATH set: $PYTHONPATH"
 
@@ -160,7 +160,7 @@ OUTPUT_DIR="{output_dir}"
 NUM_GPUS={num_gpus}
 
 torchrun --nproc_per_node=$NUM_GPUS --master_port=12345 \\
-    vintern_moe_pretrain.py \\
+    /root/sfmblk/vintern_moe_pretrain.py \\
     --model_name "$MODEL_NAME" \\
     --output_dir "$OUTPUT_DIR" \\
     --meta_path "$META_PATH" \\
@@ -186,7 +186,7 @@ torchrun --nproc_per_node=$NUM_GPUS --master_port=12345 \\
     --save_steps 500 \\
     --save_total_limit 3 \\
     --logging_steps 10 \\
-    --report_to wandb tensorboard \\
+    --report_to wandb \\
     --remove_unused_columns False
 """
 
@@ -194,7 +194,7 @@ torchrun --nproc_per_node=$NUM_GPUS --master_port=12345 \\
         train_script_path.parent.mkdir(parents=True, exist_ok=True)
         train_script_path.write_text(script_text, encoding="utf-8")
 
-        # Best effort for Linux/Kaggle; harmless on other systems.
+        # Best effort for Linux/root/sfmblk/kaggle/; harmless on other systems.
         try:
             os.chmod(train_script_path, 0o755)
         except OSError:
@@ -227,25 +227,25 @@ def parse_args():
     )
     parser.add_argument(
         "--csv-path",
-        default="/kaggle/input/datasets/nguynrichard/auto-vivqa/text/text/evaluate_60k_data_balanced_preprocessed_train_temp.csv",
+        default="/root/sfmblk/kaggle//input/datasets/nguynrichard/auto-vivqa/text/text/evaluate_60k_data_balanced_preprocessed_train_temp.csv",
     )
     parser.add_argument(
         "--images-root",
-        default="/kaggle/input/datasets/nguynrichard/auto-vivqa/images/images",
+        default="/root/sfmblk/kaggle//input/datasets/nguynrichard/auto-vivqa/images/images",
     )
-    parser.add_argument("--output-jsonl", default="/kaggle/working/autovqa_vn.jsonl")
+    parser.add_argument("--output-jsonl", default="/root/sfmblk/kaggle//working/autovqa_vn.jsonl")
     parser.add_argument(
-        "--metadata-path", default="/kaggle/working/finetune_custom_autovqavn.json"
+        "--metadata-path", default="/root/sfmblk/kaggle//working/finetune_custom_autovqavn.json"
     )
     parser.add_argument("--num-samples", type=int, default=10000)
 
     # parser.add_argument(
     #     "--internvl-source",
-    #     default="/kaggle/input/datasets/chalicetrncthnh/moevintern",
+    #     default="/root/sfmblk/kaggle//input/datasets/chalicetrncthnh/moevintern",
     # )
     parser.add_argument("--model-name", default="5CD-AI/Vintern-1B-v3_5")
-    parser.add_argument("--train-script", default="/kaggle/working/train_moe.sh")
-    parser.add_argument("--output-dir", default="/kaggle/working/vintern_moe_finetune")
+    parser.add_argument("--train-script", default="/root/sfmblk/kaggle//working/train_moe.sh")
+    parser.add_argument("--output-dir", default="/root/sfmblk/kaggle//working/vintern_moe_finetune")
     parser.add_argument("--num-gpus", type=int, default=1, help="Number of GPUs for distributed training")
     parser.add_argument("--num-epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--per-device-batch-size", type=int, default=4, help="Per device batch size")

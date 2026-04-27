@@ -43,9 +43,16 @@ try:
     WANDB_AVAILABLE = True
 except ImportError:
     WANDB_AVAILABLE = False
+# ... các import khác ...
+import sys
 
-from .modeling_internvl_moe import QueryConditionedMoE, get_query_emb
-from .dataset import (ConcatDataset, TCSLoader,
+# ── Auto-add thư mục chứa file này vào sys.path ──────────────────────────────
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+from modeling_internvl_moe import QueryConditionedMoE, get_query_emb
+from dataset import (ConcatDataset, TCSLoader,
                         WeightedConcatDataset, build_transform,
                         dynamic_preprocess, preprocess,
                         preprocess_internlm)
@@ -107,12 +114,14 @@ def concat_pad_data_collator(features, pad_id=0):
             else:
                 batch[k] = torch.tensor([f[k] for f in features])
         if k in ('pixel_values', 'image_flags'):
-            if isinstance(v, torch.Tensor):
-                batch[k] = torch.concat([f[k] for f in features])
-            elif isinstance(v, np.ndarray):
-                batch[k] = torch.concat(np.stack([f[k] for f in features]))
-            else:
-                batch[k] = torch.concat([f[k] for f in features])
+            tensors = [
+                f[k] if isinstance(f[k], torch.Tensor)
+                else torch.tensor(f[k])
+                for f in features
+            ]
+            batch[k] = torch.cat(tensors)
+            if k == 'image_flags':
+                batch[k] = batch[k].long()
     return batch
 
 
@@ -721,12 +730,20 @@ class MoETrainer(Trainer):
         self.data_args  = data_args
         self._tokenizer = tokenizer
 
+    def _unwrap(self,model):
+        # Unwrap model if it's wrapped in DataParallel or DistributedDataParallel
+        if isinstance(model, (nn.DataParallel, nn.parallel.DistributedDataParallel)):
+            return model.module
+        return model
+
     # ── Inject query_emb và tính total_loss ────────────────────────────────────
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
 
         q_input_ids      = inputs.pop("q_input_ids")
         q_attention_mask = inputs.pop("q_attention_mask")
+        logger.warning(q_input_ids.shape)
 
+        model = self._unwrap(model)  # <-- unwrap
         # Lấy query_emb từ question tokens (no_grad vì LM bị frozen)
         with torch.no_grad():
             query_emb = get_query_emb(
@@ -773,7 +790,6 @@ class MoETrainer(Trainer):
         q_input_ids      = inputs.pop("q_input_ids")
         q_attention_mask = inputs.pop("q_attention_mask")
         pixel_values     = inputs["pixel_values"]
-
         with torch.no_grad():
             query_emb = get_query_emb(
                 language_model = model.language_model.model,

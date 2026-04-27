@@ -13,11 +13,17 @@ import numpy as np
 import torch
 import torchvision.transforms as T
 import transformers
-from .conversation import get_conv_template
 from PIL import Image
 from torch.utils.data import ConcatDataset, WeightedRandomSampler
 from torchvision.transforms.functional import InterpolationMode
+# ... các import khác ...
+import sys
 
+# ── Auto-add thư mục chứa file này vào sys.path ──────────────────────────────
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+from conversation import get_conv_template
 # from .constants import (CLIP_MEAN, CLIP_STD, IMAGENET_MEAN, IMAGENET_STD,
 #                         IMG_CONTEXT_TOKEN, IMG_END_TOKEN, IMG_START_TOKEN,
 #                         SIGLIP_MEAN, SIGLIP_STD)

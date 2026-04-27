@@ -17,11 +17,22 @@ class FiLMLayer(nn.Module):
 			nn.Linear(hidden_size * 2, hidden_size * 2),
 		)
 
-	def forward(self, vis_emb: Tensor, query_emb: Tensor) -> Tensor:
-		gamma_beta = self.mlp(query_emb)
-		gamma, beta = gamma_beta.chunk(2, dim=-1)
-		gamma = gamma.unsqueeze(1)
-		beta = beta.unsqueeze(1)
+	def forward(self, vis_emb: Tensor, query_emb: Tensor):
+		"""
+		vis_emb:   [B*num_patches, num_tokens, hidden]
+		query_emb: [B, hidden]
+		"""
+		out        = self.mlp(query_emb)          # [B, 2*hidden]
+		gamma, beta = out.chunk(2, dim=-1)        # [B, hidden]
+
+		B, hidden  = gamma.shape
+		total      = vis_emb.shape[0]            # B * num_patches
+		repeat     = total // B                  # num_patches per sample
+
+		# [B, hidden] → [B, 1, hidden] → [B*np, 1, hidden]
+		gamma = gamma.unsqueeze(1).repeat_interleave(repeat, dim=0)
+		beta  = beta.unsqueeze(1).repeat_interleave(repeat, dim=0)
+
 		return gamma * vis_emb + beta
 
 
@@ -49,10 +60,25 @@ class QueryConditionedRouter(nn.Module):
 		self.gate = nn.Linear(hidden_size + query_size, num_experts, bias=False)
 
 	def forward(self, vis_emb: Tensor, query_emb: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+		"""
+		vis_emb:   [B*num_patches, num_tokens, hidden]
+		query_emb: [B, hidden]
+		"""
+		B      = query_emb.shape[0]
+		total  = vis_emb.shape[0]           # B * num_patches
+		repeat = total // B                 # num_patches per sample
 		_, num_tokens, _ = vis_emb.shape
-		query_expanded = query_emb.unsqueeze(1).expand(-1, num_tokens, -1)
-		gate_input = torch.cat([vis_emb, query_expanded], dim=-1)
-		gate_logits = self.gate(gate_input)
+
+		# [B, hidden] → [B, 1, hidden] → [B*np, 1, hidden] → [B*np, num_tokens, hidden]
+		query_expanded = (
+			query_emb
+			.unsqueeze(1)                           # [B, 1, hidden]
+			.repeat_interleave(repeat, dim=0)       # [B*np, 1, hidden]
+			.expand(-1, num_tokens, -1)             # [B*np, num_tokens, hidden]
+		)
+
+		gate_input  = torch.cat([vis_emb, query_expanded], dim=-1)  # [B*np, num_tokens, hidden+query_size]
+		gate_logits = self.gate(gate_input)                          # [B*np, num_tokens, num_experts]
 		gate_scores = F.softmax(gate_logits, dim=-1)
 		topk_scores, topk_idx = gate_scores.topk(self.top_k, dim=-1)
 		return topk_scores, topk_idx, gate_scores, gate_logits
