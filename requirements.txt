@@ -23,7 +23,7 @@ torchvision>=0.15.0
 # Transformers - QUAN TRỌNG: 4.46.3 fix lỗi all_tied_weights_keys
 # 4.45.2 gây lỗi vì thiếu property này trong PreTrainedModel
 # 4.46.0 bị yanked (lỗi Python 3.8), dùng 4.46.3 là stable
-transformers==4.47.0
+transformers==4.46.3
 
 # Safetensors
 safetensors>=0.4.0
@@ -82,7 +82,7 @@ sentencepiece>=0.1.99
 # NumPy - KHÔNG pin xuống 1.26.4, kaggle cần >=2.0
 # 1.26.4 gây conflict với: jax, cupy, opencv-headless, rasterio, shap, ...
 numpy>=2.0
-
+pandas
 requests>=2.28.0
 tqdm>=4.65.0
 pyyaml>=6.0
@@ -116,7 +116,7 @@ huggingface_hub>=0.25.0
 # -----------------------------------------------------------------------------
 # 🎨 Kagglehub
 # -----------------------------------------------------------------------------
-
+kagglehub
 # -----------------------------------------------------------------------------
 # Monitoring & Logging
 # -----------------------------------------------------------------------------
